@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Serra da Estrela · nieve y Navidad</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root { --bg:#1e293b; --card:#273449; --line:#3b4a63; --txt:#e2e8f0; --mut:#94a3b8; --acc:#38bdf8; --warn:#fbbf24; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  body { display:flex; background:var(--bg); color:var(--txt); }
+  #side { width:490px; flex:none; height:100vh; overflow-y:auto; padding:22px 20px 44px; }
+  #map { flex:1; height:100vh; }
+  h1 { font-size:23px; margin:0 0 4px; }
+  h2 { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin:26px 0 10px; font-weight:600; }
+  .sub { color:var(--mut); font-size:13.5px; line-height:1.45; margin:0 0 16px; }
+  .grid4 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .kpi b { display:block; font-size:17px; font-variant-numeric:tabular-nums; }
+  .kpi span { font-size:11.5px; color:var(--mut); }
+  .seg { display:flex; gap:8px; margin:0 0 10px; }
+  .seg button { flex:1; border:1px solid var(--line); background:transparent; color:var(--txt); padding:10px 8px; border-radius:10px; font-size:13.5px; cursor:pointer; text-align:left; line-height:1.3; }
+  .seg button small { display:block; color:var(--mut); font-size:11.5px; margin-top:2px; }
+  .seg button.on { background:#0c4a6e; border-color:var(--acc); }
+  .seg button.on small { color:#bae6fd; }
+  .pros { font-size:13px; line-height:1.5; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 13px; }
+  .pros p { margin:0 0 6px; } .pros p:last-child { margin:0; }
+  .si { color:#86efac; font-weight:600; } .no { color:#fca5a5; font-weight:600; } .ojo { color:var(--warn); font-weight:600; }
+  .dia { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:13px 14px; margin-bottom:9px; cursor:pointer; }
+  .dia.sel { border-color:var(--acc); box-shadow:0 0 0 1px var(--acc); }
+  .dia .f { font-size:11.5px; color:var(--acc); font-weight:600; letter-spacing:.03em; text-transform:uppercase; }
+  .dia .t { font-size:15.5px; font-weight:650; margin:3px 0 5px; }
+  .dia .d { font-size:13.5px; line-height:1.5; color:#cbd5e1; margin:0; }
+  .dia .m { font-size:12px; color:var(--mut); margin:7px 0 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:7px 6px; border-bottom:1px solid var(--line); text-align:right; font-variant-numeric:tabular-nums; }
+  th:first-child, td:first-child { text-align:left; }
+  th { font-size:11px; color:var(--mut); font-weight:600; }
+  tr.tot td { font-weight:700; border-bottom:none; }
+  td.min { color:#86efac; font-weight:700; }
+  .esc { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .esc div { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:11px 8px; text-align:center; }
+  .esc div.mid { background:#0c4a6e; border-color:var(--acc); }
+  .esc b { display:block; font-size:19px; font-variant-numeric:tabular-nums; }
+  .esc span { font-size:11px; color:var(--mut); display:block; }
+  .esc .mid span { color:#bae6fd; }
+  ul { margin:0; padding-left:18px; font-size:13.5px; line-height:1.55; color:#cbd5e1; }
+  li { margin-bottom:6px; }
+  li b { color:var(--txt); }
+  .nota { font-size:12.5px; color:var(--mut); line-height:1.5; margin:8px 0 0; }
+  a { color:var(--acc); }
+  .pin { color:#fff; border:2px solid #fff; border-radius:999px; width:28px; height:28px; line-height:24px; text-align:center; font-size:12px; font-weight:700; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  .leaflet-container { background:#f1f5f9; }
+  @media (max-width: 900px) {
+    body { display:block; }
+    #map { height:55vh; position:sticky; top:0; z-index:5; }
+    #side { width:auto; height:auto; overflow:visible; }
+  }
+</style>
+</head>
+<body>
+<div id="side">
+  <h1>Serra da Estrela</h1>
+  <p class="sub">Nieve para tocar y mercados de Navidad, en auto desde Cascais. 4 noches, 2 adultos y 2 niñas. Borrador para decidir fechas y base.</p>
+
+  <div class="grid4">
+    <div class="kpi"><b>3 h 47</b><span>Cascais a Seia, 325 km, sin paradas</span></div>
+    <div class="kpi"><b>18 a 29 min</b><span>de la base a la nieve (Torre, 1.993 m)</span></div>
+    <div class="kpi"><b>5 eventos</b><span>de Navidad alrededor de la sierra</span></div>
+    <div class="kpi"><b id="kpiTotal">€ 0</b><span>escenario realista, todo incluido</span></div>
+  </div>
+
+  <h2>Elige la ventana</h2>
+  <div class="seg" id="ventanas">
+    <button data-v="A" class="on">Vie 27 nov a mar 1 dic<small>Nieve pronosticada</small></button>
+    <button data-v="B">Sáb 5 a mié 9 dic<small>Toda la Navidad abierta</small></button>
+  </div>
+  <div class="pros" id="pros"></div>
+
+  <h2>Día por día</h2>
+  <div id="dias"></div>
+
+  <h2>Dónde dormir: minutos de manejo desde cada base</h2>
+  <table id="bases"></table>
+  <p class="nota">Tiempos por carretera según OSRM, con ruta despejada. La columna Total suma los cinco destinos; en verde la base con menos manejo. El itinerario de arriba usa Seia o Sabugueiro por eso. La base es decisión tuya.</p>
+
+  <h2>Alojamientos para mirar</h2>
+  <ul>
+    <li><b>Casas do Cruzeiro</b> (Sabugueiro): casas con chimenea y cocina, desde T0 hasta T4.</li>
+    <li><b>Casas do Soito</b> (Lapa dos Dinheiros, Seia): casas de 2 o 3 dormitorios, sala con chimenea.</li>
+    <li><b>Chão do Rio</b> (Travancinha, Seia): seis casas con chimenea y cocina junto a un lago, más lejos de la nieve.</li>
+    <li><b>Luna Chalets da Montanha</b> (Penhas da Saúde): chalets con chimenea a 13 min de la Torre, con los servicios del hotel vecino.</li>
+    <li><b>Vila Galé Collection Serra da Estrela</b> (Manteigas): hotel, nota 9,0, desde € 149 la noche según una guía.</li>
+    <li><b>Casa Cerro da Correia</b> (Manteigas): casa de 4 dormitorios con chimenea y vista al valle glaciar.</li>
+  </ul>
+  <p class="nota">Nombres sacados de guías de viaje. Sin verificar para estas fechas: disponibilidad, precio, cuna y cancelación gratis. Reservar solo con cancelación gratis hasta que la nieve esté confirmada.</p>
+
+  <h2>Presupuesto · 3 escenarios</h2>
+  <div class="esc" id="esc"></div>
+  <table id="ppto"></table>
+  <p class="nota">Todo son estimaciones mías, ningún precio está cotizado. Alojamiento 4 noches; comida con desayuno en la casa y la mayor comiendo de lo que haya; bencina para unos 950 km; peajes A1 y A23 ida y vuelta; entradas incluye Óbidos Vila Natal a la vuelta (€ 12 por adulto) y un museo.</p>
+
+  <h2>Antes de salir</h2>
+  <ul>
+    <li><b>Confirmar la nieve.</b> El pronóstico del 20-nov da 8 cm el mar 24 y 7 cm el mié 25 en la cima, con frío hasta el jue 26. Mirarlo de nuevo el martes y buscar fotos del día antes de partir.</li>
+    <li><b>La carretera a la Torre se cierra</b> con nieve fresca y viento (tramos Piornos a Torre y Torre a Lagoa Comprida de la N338). Suele reabrir en horas o un par de días. Lo anuncia Proteção Civil de Beiras e Serra da Estrela. Por eso el plan deja dos días posibles para subir.</li>
+    <li><b>Si la cima está cerrada</b>, la nieve se busca más abajo en la misma carretera, hasta donde dejen pasar.</li>
+    <li><b>Arriba hace frío de verdad:</b> entre -5 y 3 °C con viento. Visita corta, ropa de nieve para la mayor, la bebé bien abrigada y dentro del auto si hay viento.</li>
+    <li><b>Altitud y bebé de 2 meses:</b> la Torre está a casi 2.000 m. Vale preguntarle al pediatra antes.</li>
+    <li><b>Urgencia pediátrica:</b> referencia Covilhã (53 min desde Seia) o Guarda (61 min). Horarios sin verificar.</li>
+    <li><b>Fechas de Navidad:</b> tomadas de prensa local de noviembre de 2026. Confirmar en la página de cada municipio.</li>
+  </ul>
+</div>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  var PUNTOS = {
+    cascais:  {n:'Cascais', lat:38.6979, lon:-9.4215, c:'#dc2626', e:'C'},
+    seia:     {n:'Seia · base', lat:40.4200, lon:-7.7030, c:'#0f172a', e:'B'},
+    sabu:     {n:'Sabugueiro · base alternativa', lat:40.4020, lon:-7.6400, c:'#0f172a', e:'b'},
+    torre:    {n:'Torre · nieve (1.993 m)', lat:40.3217, lon:-7.6114, c:'#0284c7', e:'❄'},
+    gouveia:  {n:'Gouveia · Natal Encantado', lat:40.4940, lon:-7.5930, c:'#b91c1c', e:'★'},
+    cabeca:   {n:'Cabeça · Aldeia Natal', lat:40.3160, lon:-7.7560, c:'#b91c1c', e:'★'},
+    covilha:  {n:'Covilhã · Natal com Arte', lat:40.2810, lon:-7.5040, c:'#b91c1c', e:'★'},
+    guarda:   {n:'Guarda · Cidade Natal', lat:40.5370, lon:-7.2680, c:'#b91c1c', e:'★'},
+    manteigas:{n:'Manteigas · valle glaciar', lat:40.4020, lon:-7.5390, c:'#475569', e:'M'},
+    obidos:   {n:'Óbidos · Vila Natal', lat:39.3600, lon:-9.1570, c:'#b91c1c', e:'★'}
+  };
+  var VENTANAS = {
+    A: {
+      pros: '<p><span class="si">Nieve:</span> pronosticados 15 cm en la cima el 24 y 25 de noviembre, con frío hasta el 26. Es la mejor señal que hay hoy.</p>'
+          + '<p><span class="ojo">Navidad a medias:</span> abiertos Gouveia (desde 16-nov), el mercado de Seia (28 y 29 nov, 1 dic) y Óbidos (desde 27-nov). Covilhã y Guarda abren recién el 1 dic. Cabeça todavía no (abre 5 dic).</p>'
+          + '<p><span class="ojo">Ojo:</span> el 1 de diciembre es feriado, fin de semana largo con más gente.</p>',
+      dias: [
+        {f:'Vie 27 nov', t:'Cascais a Seia', p:'seia', d:'Salida en la mañana. 3 h 47 de manejo más dos paradas, unas 5 horas puerta a puerta. Instalarse, prender la chimenea, cena temprano.', m:'325 km'},
+        {f:'Sáb 28 nov', t:'Nieve en la Torre y mercado de Seia', p:'torre', d:'Subir temprano a la Torre antes de que llegue la gente. Una hora de nieve y de vuelta para la siesta. En la tarde, mercado de Navidad de Seia en el Mercado Municipal.', m:'Base a Torre 18 a 29 min'},
+        {f:'Dom 29 nov', t:'Gouveia, Natal Encantado', p:'gouveia', d:'Mañana tranquila. Después de almuerzo, Gouveia con su mercado y luces. Segundo día del mercado de Seia si quedó algo por ver.', m:'Seia a Gouveia 21 min'},
+        {f:'Lun 30 nov', t:'Segunda oportunidad de nieve y Manteigas', p:'manteigas', d:'Día comodín. Si el sábado la carretera estaba cerrada o había niebla, se sube hoy. Si no, valle glaciar del Zêzere y Manteigas.', m:'Torre a Manteigas 27 min'},
+        {f:'Mar 1 dic', t:'Vuelta, con Covilhã u Óbidos en el camino', p:'obidos', d:'Dos opciones. Bajar por Covilhã, donde hoy abre Natal com Arte, y seguir a Cascais (3 h 24). O volver por Óbidos y entrar a Vila Natal: Seia a Óbidos 2 h 44 y de ahí a casa 1 h 11, casi lo mismo que la ruta directa.', m:'Hoy feriado: Óbidos abre de 10 a 21 h'}
+      ]
+    },
+    B: {
+      pros: '<p><span class="si">Navidad completa:</span> todo abierto, incluida Cabeça Aldeia Natal, que inaugura el sáb 5 a las 14 h, y los mercados de Seia (5, 6 y 8 dic), Gouveia, Covilhã y Guarda.</p>'
+          + '<p><span class="no">Nieve sin dato:</span> todavía no hay pronóstico para esas fechas. Puede quedar la del 24 y 25 de noviembre si sigue el frío, o no haber nada.</p>'
+          + '<p><span class="ojo">Ojo:</span> el 8 de diciembre es feriado. Se vuelve el mié 9 porque el jue 10 hay control de la bebé a las 14:30.</p>',
+      dias: [
+        {f:'Sáb 5 dic', t:'Cascais a Seia', p:'seia', d:'Salida en la mañana, unas 5 horas con paradas. Si llegan con energía, mercado de Seia en la tarde.', m:'325 km'},
+        {f:'Dom 6 dic', t:'Nieve en la Torre y Cabeça Aldeia Natal', p:'cabeca', d:'Torre temprano. Siesta. En la tarde, Cabeça: la aldea entera decorada por sus vecinos, mercado de 13 a 20 h. Ir con luz y quedarse al encendido.', m:'Torre a Cabeça 31 min · Cabeça a Seia 28 min'},
+        {f:'Lun 7 dic', t:'Gouveia y día de chimenea', p:'gouveia', d:'Día suave entre dos festivos. Gouveia, Natal Encantado. Segunda oportunidad de nieve si el domingo no se pudo subir.', m:'Seia a Gouveia 21 min'},
+        {f:'Mar 8 dic', t:'Covilhã, Natal com Arte', p:'covilha', d:'Cruzar la sierra por arriba, con parada en la nieve, y bajar a Covilhã para su mercado. Vuelta por la misma ruta o por Manteigas.', m:'Seia a Covilhã 53 min'},
+        {f:'Mié 9 dic', t:'Vuelta, con Óbidos en el camino', p:'obidos', d:'Volver por Óbidos y entrar a Vila Natal: Seia a Óbidos 2 h 44 y de ahí a casa 1 h 11, casi lo mismo que la ruta directa (3 h 47).', m:'Día de semana: Óbidos abre de 10 a 18 h'}
+      ]
+    }
+  };
+  var BASES = [
+    ['Sabugueiro', 18, 11, 21, 32, 42],
+    ['Seia', 29, 0, 21, 28, 53],
+    ['Penhas da Saúde', 13, 38, 48, 41, 16],
+    ['Covilhã', 27, 52, 63, 56, 0],
+    ['Manteigas', 27, 45, 44, 56, 40]
+  ];
+  var PPTO = [
+    ['Alojamiento, 4 noches', 360, 520, 720],
+    ['Comida, 5 días', 175, 300, 500],
+    ['Bencina, 950 km', 95, 105, 115],
+    ['Peajes ida y vuelta', 50, 55, 60],
+    ['Entradas y actividades', 0, 35, 70],
+    ['Imprevistos 10%', 68, 102, 147]
+  ];
+
+  var mapa = L.map('map').setView([39.75,-8.3], 8);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {attribution:'Tiles © Esri', maxZoom:17}).addTo(mapa);
+  var marcas = {};
+  Object.keys(PUNTOS).forEach(function(k){
+    var p = PUNTOS[k];
+    marcas[k] = L.marker([p.lat,p.lon], {icon:L.divIcon({className:'', html:'<div class="pin" style="background:'+p.c+'">'+p.e+'</div>', iconSize:[28,28], iconAnchor:[14,14]})}).addTo(mapa).bindPopup('<b>'+p.n+'</b>');
+  });
+  L.polyline([[38.6979,-9.4215],[39.46,-8.48],[39.82,-7.49],[40.2810,-7.5040],[40.3217,-7.6114],[40.4200,-7.7030]], {color:'#0f172a', weight:3, dashArray:'6 8', opacity:.6}).addTo(mapa);
+  L.polyline([[40.4200,-7.7030],[39.3600,-9.1570],[38.6979,-9.4215]], {color:'#b91c1c', weight:3, dashArray:'6 8', opacity:.5}).addTo(mapa);
+
+  var ventana = 'A', diaSel = -1;
+  function pintarDias(){
+    var v = VENTANAS[ventana];
+    document.getElementById('pros').innerHTML = v.pros;
+    var cont = document.getElementById('dias'); cont.innerHTML = '';
+    v.dias.forEach(function(d, i){
+      var el = document.createElement('div');
+      el.className = 'dia' + (i===diaSel?' sel':'');
+      el.innerHTML = '<div class="f">Día '+(i+1)+' · '+d.f+'</div><div class="t">'+d.t+'</div><p class="d">'+d.d+'</p><p class="m">'+d.m+'</p>';
+      el.addEventListener('click', function(){
+        diaSel = i; pintarDias();
+        var p = PUNTOS[d.p];
+        mapa.flyTo([p.lat,p.lon], d.p==='obidos'||d.p==='cascais' ? 9 : 11, {duration:0.8});
+        marcas[d.p].openPopup();
+      });
+      cont.appendChild(el);
+    });
+  }
+  document.getElementById('ventanas').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){ x.classList.remove('on'); });
+    b.classList.add('on'); ventana = b.getAttribute('data-v'); diaSel = -1; pintarDias();
+    mapa.flyTo([39.75,-8.3], 8, {duration:0.6});
+  });
+
+  var tb = '<tr><th>Base</th><th>Torre</th><th>Seia</th><th>Gouveia</th><th>Cabeça</th><th>Covilhã</th><th>Total</th></tr>';
+  var sumas = BASES.map(function(b){ return b.slice(1).reduce(function(a,x){ return a+x; }, 0); });
+  var menor = Math.min.apply(null, sumas);
+  BASES.forEach(function(b, i){
+    tb += '<tr><td>'+b[0]+'</td>' + b.slice(1).map(function(x){ return '<td>'+x+'</td>'; }).join('') + '<td class="'+(sumas[i]===menor?'min':'')+'">'+sumas[i]+'</td></tr>';
+  });
+  document.getElementById('bases').innerHTML = tb;
+
+  var tot = [0,0,0];
+  var tp = '<tr><th></th><th>Optimista</th><th>Realista</th><th>Gastador</th></tr>';
+  PPTO.forEach(function(r){
+    tp += '<tr><td>'+r[0]+'</td><td>€ '+r[1]+'</td><td>€ '+r[2]+'</td><td>€ '+r[3]+'</td></tr>';
+    tot[0]+=r[1]; tot[1]+=r[2]; tot[2]+=r[3];
+  });
+  tp += '<tr class="tot"><td>Total</td><td>€ '+tot[0]+'</td><td>€ '+tot[1]+'</td><td>€ '+tot[2]+'</td></tr>';
+  document.getElementById('ppto').innerHTML = tp;
+  var nombres = ['Optimista','Realista','Gastador'];
+  document.getElementById('esc').innerHTML = tot.map(function(t, i){
+    return '<div class="'+(i===1?'mid':'')+'"><b>€ '+t.toLocaleString('es-ES')+'</b><span>'+nombres[i]+'</span><span>€ '+Math.round(t/4)+' por noche</span></div>';
+  }).join('');
+  document.getElementById('kpiTotal').textContent = '€ ' + tot[1].toLocaleString('es-ES');
+  pintarDias();
+})();
+</script>
+</body>
+</html>
